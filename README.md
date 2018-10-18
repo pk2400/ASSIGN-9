@@ -31,12 +31,15 @@
 
 (define SONG-1 (make-song "Mona Lisa"
                           "Lil Wayne"
+                          33
+                          "Carter V"
                           "/Users/pk/Downloads/Lil Wayne ft. Kendrick Lamar- Mona Lisa
 (Carter 5).mp3"))
 
 #;
 (define (temp-song s)
-  (.... (song-name s) .... (song-artist s) ... (song-bytes)....))
+  (.... (song-name s) .... (song-artist s) ... (song-length s)
+        .... (song-album s).... (song-bytes)....))
 
 
 ; A Status is one of
@@ -105,7 +108,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; to-draw
 ;Constants for drawing
-(define BACKGROUND (empty-scene 2000 2000))
+(define BACKGROUND (empty-scene 1250 1250))
 (define TEXT-NEXT-SONG "Next song: ")
 (define TEXT-NEXT-ARTIST "Artist: ")
 (define TEXT-INIT "Requesting song. Feedback of last song: ")
@@ -281,34 +284,35 @@
 ;;;;;;;;;;;;;;;;;; on-receive
 
 (define ERROR-MESSAGE "a package with a Music Player was not sent by the server")
-; Get-Song : ServerMsg -> PlayerResult
+; Get-Song : MusicPlayer ServerMsg -> PlayerResult
 ; Recieves back information from the server
 
-(define (get-song msg)
+(define (get-song mp msg)
   (cond
-    [(string=? msg-first "ERROR") ERROR-MESSAGE]
-    [(string=? msg-first "SONG") (to-musicplayer (msg-second) (msg-third))]))
+    [(string=? (first msg) "ERROR") ERROR-MESSAGE]
+    [(string=? (first msg) "SONG") (to-musicplayer (second msg) (third msg) mp)]))
 
 ; To-MusicPlayer: MetaData String -> MusicPlayer
-; extracts the information from MetaData and the bytes of the song, and places this in the Music Player
+; extracts the information from MetaData and the bytes of the song, and places this in
+; the Music Player
 
-(define (to-musicplayer m b)
-  (make-music-player (extract-song (musicplayer-status m b)) musicplayer-feedback))
+(define (to-musicplayer m b mp)
+  (make-musicplayer (extract-song m b) (musicplayer-feedback mp)))
 
 ; extract-song: MetaData String -> Song
 ; places the information from the ServerMsg into the song
 
 (define (extract-song m b)
-  (make-song (metadata-first m) (metadata-second m) (metadata-third m) (metadata-fourth m) b))
+  (make-song (first m) (second m) (third m) (fourth m) b))
        
 
 (define (main-music-player mp-init)
 (big-bang mp-init
 [port 10001]
 [register "dictionary.ccs.neu.edu"]
- [to-draw draw-player]
+ [to-draw draw-music]
  [on-key play-song]
  [on-tick request-song]
- [on-recieve get-song] ))
+ [on-receive get-song]))
 
 
